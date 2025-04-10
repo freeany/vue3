@@ -1,0 +1,23 @@
+{
+  "name": "vue-code",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "没什么意义，主要是管理里面的项目",
+    "dev": "node scripts/dev.js reactivity -f esm"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.2",
+    "minimist": "^1.2.8",
+    "typescript": "^5.8.3"
+  }
+}
