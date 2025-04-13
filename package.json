@@ -6,7 +6,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "没什么意义，主要是管理里面的项目",
+    "test": "这个packagejson没什么意义，主要是管理里面的项目",
     "dev": "node scripts/dev.js reactivity -f esm"
   },
   "keywords": [],
