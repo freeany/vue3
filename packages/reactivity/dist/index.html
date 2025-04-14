@@ -13,17 +13,48 @@
 
     const data = reactive({
       name: 'qqq',
-      age: 30
+      age: 30,
+      flag: 'true'
     })
 
+    // 1. 
+    // effect(() => {
+    //   console.log('effect触发');
+      
+    //   document.getElementById('app').innerHTML = `${data.name}---${data.age}`
+    // })
+
+    // setTimeout(() => {
+    //   data.age
+    // },2000)
+
+
+    // 2. 
+    // effect(() => {
+    //   console.log('effect触发');
+      
+    //   app.innerHTML = data.flag ? data.name : data.age
+    // })
+
+    // setTimeout(() => {
+    //   data.flag = false
+
+    //   setTimeout(() => {
+    //     data.name = 'test' // 不应该触发effect了
+    //   },1000)
+    // },1000)
+
+
+    // 3. 
     effect(() => {
-      document.getElementById('app').innerHTML = `${data.name}---${data.age}`
+      console.log('effect执行');
+      document.getElementById('app').innerHTML = data.flag + data.flag + data.flag
     })
 
-    
     setTimeout(() => {
-      data.age++
-    },2000)
+      data.flag = 'abc'
+    }, 2000)
+
   </script>
 </body>
 </html>

@@ -9,7 +9,6 @@ export const mutableHandlers: ProxyHandler<any> = {
     if(key === ReactiveFlags.IS_REACTIVE) {
       return true
     }
-
     // 获取当前正在执行的effect，需要保留下来，也就是说当取值的时候，应该让响应式属性和effect映射起来。
     // console.log(activeEffect, key)
     track(target, key)

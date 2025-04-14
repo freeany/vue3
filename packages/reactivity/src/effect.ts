@@ -1,9 +1,12 @@
 export let activeEffect: any
+
+// 清空effect
+function preCleanEffect(effect) {
+
+}
 // 我们要创建一个可响应式的effect， 数据变化之后可以重新执行
 export function effect(fn: any, options?: any) {
   
-  
-
   // 创建一个effect， 只要依赖的属性变化了就要执行回调
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run()
@@ -36,6 +39,10 @@ class ReactiveEffect {
     let lastEffective = activeEffect
     try {
       activeEffect = this
+
+      
+      // 在effect重新执行之前,需要将上一次的依赖情况清空
+      preCleanEffect(this)
       return this.fn()
     } finally {
       activeEffect = lastEffective
@@ -45,11 +52,16 @@ class ReactiveEffect {
 
 
 /**
- * dep就是age: {effect, effect}; 这种
+ * dep就是age: {effect, effect}; 后面的effect effect
  * 收集依赖
  * 进行双向记忆
  */
 export function trackEffect(effect, dep) {
+  console.log(effect, dep,'trackeffect');
+
+  
+  
+  
   dep.set(effect, effect._trackId);
   effect.deps[effect._depsLength++] = dep
 }

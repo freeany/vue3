@@ -5,6 +5,8 @@ function isObject(val) {
 
 // packages/reactivity/src/effect.ts
 var activeEffect;
+function preCleanEffect(effect2) {
+}
 function effect(fn, options) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
@@ -34,6 +36,7 @@ var ReactiveEffect = class {
     let lastEffective = activeEffect;
     try {
       activeEffect = this;
+      preCleanEffect(this);
       return this.fn();
     } finally {
       activeEffect = lastEffective;
@@ -41,6 +44,7 @@ var ReactiveEffect = class {
   }
 };
 function trackEffect(effect2, dep) {
+  console.log(effect2, dep, "trackeffect");
   dep.set(effect2, effect2._trackId);
   effect2.deps[effect2._depsLength++] = dep;
 }
