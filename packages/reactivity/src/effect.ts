@@ -1,6 +1,8 @@
 export let activeEffect: any
 // 我们要创建一个可响应式的effect， 数据变化之后可以重新执行
 export function effect(fn: any, options?: any) {
+  
+  
 
   // 创建一个effect， 只要依赖的属性变化了就要执行回调
   const _effect = new ReactiveEffect(fn, () => {
@@ -12,6 +14,10 @@ export function effect(fn: any, options?: any) {
 }
 
 class ReactiveEffect {
+  _trackId = 0; // 用于记录当前effect执行了几次
+  deps = []; // 记录存放了哪些依赖
+  _depsLength = 0; // 收集了几个
+
   active = true
   // fn是用户编写的函数
   // 如果fn中依赖的数据发生变化之后，需要重新调用 run方法
@@ -36,3 +42,25 @@ class ReactiveEffect {
     }
   }
 }
+
+
+/**
+ * dep就是age: {effect, effect}; 这种
+ * 收集依赖
+ * 进行双向记忆
+ */
+export function trackEffect(effect, dep) {
+  dep.set(effect, effect._trackId);
+  effect.deps[effect._depsLength++] = dep
+}
+
+
+// 将所有的dep进行触发
+export function triggerEffects(dep) {
+  for(const effect of dep.keys()) {
+    if(effect.sheduler) {
+      effect.sheduler()
+    }
+  }
+}
+
