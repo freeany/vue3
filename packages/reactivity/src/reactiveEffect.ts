@@ -3,7 +3,7 @@ import { activeEffect, trackEffect, triggerEffects } from "./effect";
 // 存放依赖收集关系的容器
 const targetMap = new WeakMap();
 
-function createDep(cleanUp, key) {
+function createDep(cleanUp: any, key: string) {
   const effectsMap = new Map() as any
   effectsMap.name = key
   effectsMap.cleanUp = cleanUp

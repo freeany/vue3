@@ -46,14 +46,20 @@
 
 
     // 3. 
+    // effect(() => {
+    //   console.log('effect执行');
+    //   document.getElementById('app').innerHTML = data.flag + data.flag + data.flag + data.name
+    // })
+
+    // setTimeout(() => {
+    //   data.flag = 'abc'
+    // }, 2000)
+
     effect(() => {
-      console.log('effect执行');
-      document.getElementById('app').innerHTML = data.flag + data.flag + data.flag
+      app.innerHTML = data.flag ? data.name : data.age
     })
 
-    setTimeout(() => {
-      data.flag = 'abc'
-    }, 2000)
+
 
   </script>
 </body>

@@ -1,9 +1,30 @@
 export let activeEffect: any
 
 // 清空effect
-function preCleanEffect(effect) {
-
+function preCleanEffect(effect: ReactiveEffect) {
+  effect._depsLength = 0;
+  effect._trackId++; // 每次执行 id+1，如果同一个effect执行，id就是相同的。
 }
+
+// 清除多余的effect
+function postCleanEffect(effect: ReactiveEffect) {
+  // [flag, name, aa, bb, cc]
+  // [flag]
+  if(effect.deps.length > effect._depsLength) {
+    for(let i = effect._depsLength; i< effect.deps.length;i++) {
+      cleanEffect(effect.deps[i], effect) // 删除映射表中对应的effect
+    }
+    effect.deps.length = effect._depsLength // 更新依赖列表的长度
+  } 
+}
+
+function cleanEffect(dep, effect) {
+  dep.delete(effect)
+  if(dep.size === 0) {
+    dep.cleanUp() // 如果map为空，则删掉此属性
+  }
+}
+
 // 我们要创建一个可响应式的effect， 数据变化之后可以重新执行
 export function effect(fn: any, options?: any) {
   
@@ -17,8 +38,8 @@ export function effect(fn: any, options?: any) {
 }
 
 class ReactiveEffect {
-  _trackId = 0; // 用于记录当前effect执行了几次
-  deps = []; // 记录存放了哪些依赖
+  _trackId = 0; // 用于记录当前effect执行了几次,(防止一个属性在当前effect中多次依赖收集)  只收集一次
+  deps:any = []; // 记录存放了哪些依赖
   _depsLength = 0; // 收集了几个
 
   active = true
@@ -43,32 +64,56 @@ class ReactiveEffect {
       
       // 在effect重新执行之前,需要将上一次的依赖情况清空
       preCleanEffect(this)
+      // 重新收集依赖
       return this.fn()
     } finally {
+      postCleanEffect(this)
       activeEffect = lastEffective
     }
   }
 }
 
-
 /**
  * dep就是age: {effect, effect}; 后面的effect effect
  * 收集依赖
  * 进行双向记忆
+ * 
+ * 1. _trackId用于记录执行次数(防止一个属性在当前effect中多次依赖收集)， 只收集一次
+ * 2. 拿到上一次依赖(dep)的第一个和这次的比较。 （姜老师写的是最后一个，这里有异议） 
  */
-export function trackEffect(effect, dep) {
-  console.log(effect, dep,'trackeffect');
+export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: any) {
+  // console.log(effect, dep,'trackeffect');
+  // 先进行去重操作
+  if(dep.get(effect) !== effect._trackId) {
+    dep.set(effect, effect._trackId)
 
+    // 主要是处理这个问题
+    // {flag,name} 
+    // {flag,age}
+
+    const oldDep = effect.deps[effect._depsLength]
+
+    if(oldDep !== dep) {
+      if(oldDep) {
+        // 删除老的
+        cleanEffect()
+      }
+      effect.deps[effect._depsLength++] = dep
+    }else {
+      effect._depsLength++
+    }
+
+  }
   
   
   
-  dep.set(effect, effect._trackId);
-  effect.deps[effect._depsLength++] = dep
+  // dep.set(effect, effect._trackId);
+  // effect.deps[effect._depsLength++] = dep
 }
 
 
 // 将所有的dep进行触发
-export function triggerEffects(dep) {
+export function triggerEffects(dep: any) {
   for(const effect of dep.keys()) {
     if(effect.sheduler) {
       effect.sheduler()

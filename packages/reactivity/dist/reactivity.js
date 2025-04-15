@@ -6,6 +6,22 @@ function isObject(val) {
 // packages/reactivity/src/effect.ts
 var activeEffect;
 function preCleanEffect(effect2) {
+  effect2._depsLength = 0;
+  effect2._trackId++;
+}
+function postCleanEffect(effect2) {
+  if (effect2.deps.length > effect2._depsLength) {
+    for (let i = effect2._depsLength; i < effect2.deps.length; i++) {
+      cleanEffect(effect2.deps[i], effect2);
+    }
+    effect2.deps.length = effect2._depsLength;
+  }
+}
+function cleanEffect(dep, effect2) {
+  dep.delete(effect2);
+  if (dep.size === 0) {
+    dep.cleanUp();
+  }
 }
 function effect(fn, options) {
   const _effect = new ReactiveEffect(fn, () => {
@@ -21,7 +37,7 @@ var ReactiveEffect = class {
     this.fn = fn;
     this.sheduler = sheduler;
     this._trackId = 0;
-    // 用于记录当前effect执行了几次
+    // 用于记录当前effect执行了几次,(防止一个属性在当前effect中多次依赖收集)  只收集一次
     this.deps = [];
     // 记录存放了哪些依赖
     this._depsLength = 0;
@@ -39,14 +55,24 @@ var ReactiveEffect = class {
       preCleanEffect(this);
       return this.fn();
     } finally {
+      postCleanEffect(this);
       activeEffect = lastEffective;
     }
   }
 };
 function trackEffect(effect2, dep) {
-  console.log(effect2, dep, "trackeffect");
-  dep.set(effect2, effect2._trackId);
-  effect2.deps[effect2._depsLength++] = dep;
+  if (dep.get(effect2) !== effect2._trackId) {
+    dep.set(effect2, effect2._trackId);
+    const oldDep = effect2.deps[effect2._depsLength];
+    if (oldDep !== dep) {
+      if (oldDep) {
+        cleanEffect();
+      }
+      effect2.deps[effect2._depsLength++] = dep;
+    } else {
+      effect2._depsLength++;
+    }
+  }
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
