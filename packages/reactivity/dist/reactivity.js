@@ -28,14 +28,19 @@ function effect(fn, options) {
     _effect.run();
   });
   _effect.run();
-  return _effect;
+  if (options) {
+    Object.assign(_effect, options);
+  }
+  const runner = _effect.run.bind(_effect);
+  runner._effect = _effect;
+  return runner;
 }
 var ReactiveEffect = class {
   // fn是用户编写的函数
   // 如果fn中依赖的数据发生变化之后，需要重新调用 run方法
-  constructor(fn, sheduler) {
+  constructor(fn, scheduler) {
     this.fn = fn;
-    this.sheduler = sheduler;
+    this.scheduler = scheduler;
     this._trackId = 0;
     // 用于记录当前effect执行了几次,(防止一个属性在当前effect中多次依赖收集)  只收集一次
     this.deps = [];
@@ -66,7 +71,7 @@ function trackEffect(effect2, dep) {
     const oldDep = effect2.deps[effect2._depsLength];
     if (oldDep !== dep) {
       if (oldDep) {
-        cleanEffect();
+        cleanEffect(dep, effect2);
       }
       effect2.deps[effect2._depsLength++] = dep;
     } else {
@@ -76,8 +81,8 @@ function trackEffect(effect2, dep) {
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
-    if (effect2.sheduler) {
-      effect2.sheduler();
+    if (effect2.scheduler) {
+      effect2.scheduler();
     }
   }
 }

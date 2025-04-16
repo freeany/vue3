@@ -27,14 +27,21 @@ function cleanEffect(dep, effect) {
 
 // 我们要创建一个可响应式的effect， 数据变化之后可以重新执行
 export function effect(fn: any, options?: any) {
-  
   // 创建一个effect， 只要依赖的属性变化了就要执行回调
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run()
   })
 
   _effect.run()
-  return _effect
+
+  if(options) {
+    Object.assign(_effect, options)
+  }
+
+  const runner = _effect.run.bind(_effect)
+  runner._effect = _effect
+
+  return runner
 }
 
 class ReactiveEffect {
@@ -45,7 +52,7 @@ class ReactiveEffect {
   active = true
   // fn是用户编写的函数
   // 如果fn中依赖的数据发生变化之后，需要重新调用 run方法
-  constructor(public fn: any, public sheduler: any) {}
+  constructor(public fn: any, public scheduler: any) {}
   
   // 执行effect传入的函数
   run() {
@@ -60,7 +67,6 @@ class ReactiveEffect {
     let lastEffective = activeEffect
     try {
       activeEffect = this
-
       
       // 在effect重新执行之前,需要将上一次的依赖情况清空
       preCleanEffect(this)
@@ -82,6 +88,7 @@ class ReactiveEffect {
  * 2. 拿到上一次依赖(dep)的第一个和这次的比较。 （姜老师写的是最后一个，这里有异议） 
  */
 export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: any) {
+  
   // console.log(effect, dep,'trackeffect');
   // 先进行去重操作
   if(dep.get(effect) !== effect._trackId) {
@@ -89,6 +96,7 @@ export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: an
 
     // 主要是处理这个问题
     // {flag,name} 
+    //     |  到     
     // {flag,age}
 
     const oldDep = effect.deps[effect._depsLength]
@@ -96,7 +104,7 @@ export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: an
     if(oldDep !== dep) {
       if(oldDep) {
         // 删除老的
-        cleanEffect()
+        cleanEffect(dep, effect)
       }
       effect.deps[effect._depsLength++] = dep
     }else {
@@ -115,8 +123,8 @@ export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: an
 // 将所有的dep进行触发
 export function triggerEffects(dep: any) {
   for(const effect of dep.keys()) {
-    if(effect.sheduler) {
-      effect.sheduler()
+    if(effect.scheduler) {
+      effect.scheduler()
     }
   }
 }

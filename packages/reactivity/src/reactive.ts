@@ -17,9 +17,6 @@ export function reactive(target: any) {
  */
 const reactiveMap = new WeakMap()
 
-
-
-
 function createReactiveObject(target: any) {
   if(!isObject(target)) {
     return target
@@ -35,6 +32,8 @@ function createReactiveObject(target: any) {
     const p2 = reactive(p1)
     console.log(p1 === p2); // 需要是true
    */
+
+  // 会触发get 
   if(target[ReactiveFlags.IS_REACTIVE]) {
     return target
   }
