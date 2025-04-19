@@ -66,3 +66,13 @@ class ObjectRefImpl {
 export function toRef(obj, key) {
   return new ObjectRefImpl(obj, key)
 }
+
+
+export function toRefs(obj) {
+  let res = {}
+  Object.keys(obj).forEach(key => {
+    res[key] = toRef(obj, key) // 挨个属性调用toRef
+  })
+
+  return res
+}

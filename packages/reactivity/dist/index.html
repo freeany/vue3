@@ -10,7 +10,7 @@
 
   <script type="module">
     // import { reactive, ref, toRef } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
-    import { reactive, effect, ref, toRef } from './reactivity.js'
+    import { reactive, effect, ref, toRef, toRefs } from './reactivity.js'
 
     // const target = {
     //   name: 'qqq',
@@ -135,16 +135,34 @@
 
 
     // 7. toRef
+    // const state = reactive({
+    //   name: 'jw',
+    //   age: 30
+    // })
+
+    // const name = toRef(state, 'name') // 是基于proxy获取值的，与state中的值会同步
+    // console.log(name);
+    // name.value = 'jl'
+    
+    // console.log(state);
+
+    // 8. toRefs
     const state = reactive({
-      name: 'jw',
-      age: 30
+      foo: 1,
+      bar: 2
     })
 
-    const name = toRef(state, 'name') // 是基于proxy获取值的，与state中的值会同步
-    console.log(name);
-    name.value = 'jl'
-    
-    console.log(state);
+    const stateAsRefs = toRefs(state)
+
+    // 这个 ref 和源属性已经“链接上了”
+    state.foo++
+    console.log(stateAsRefs.foo.value) // 2
+
+    stateAsRefs.foo.value++
+    console.log(state.foo) // 3
+
+
+    // 9. 
     
     
   </script>
