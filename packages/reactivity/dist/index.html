@@ -9,8 +9,8 @@
   <div id="app"></div>
 
   <script type="module">
-    // import { reactive, ref, toRef } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
-    import { reactive, effect, ref, toRef, toRefs } from './reactivity.js'
+    import { reactive, ref, toRef, toRefs, proxyRefs } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
+    // import { reactive, effect, ref, toRef, toRefs } from './reactivity.js'
 
     // const target = {
     //   name: 'qqq',
@@ -146,24 +146,36 @@
     
     // console.log(state);
 
-    // 8. toRefs
+    // 8. toRefs 防止解构的时候丢包
+    // const state = reactive({
+    //   foo: 1,
+    //   bar: 2
+    // })
+
+    // const stateAsRefs = toRefs(state)
+    // // const stateAsRefs = {...toRefs()} // 不会丢失响应式
+
+    // // 这个 ref 和源属性已经“链接上了”
+    // state.foo++
+    // console.log(stateAsRefs.foo.value) // 2
+
+    // stateAsRefs.foo.value++
+    // console.log(state.foo) // 3
+
+
+    // 9. proxyRefs 
+    // 如果是ref则自动.value， 渲染的时候取值就是用这个方法，但是平时开发用不到
     const state = reactive({
       foo: 1,
       bar: 2
     })
 
-    const stateAsRefs = toRefs(state)
-
-    // 这个 ref 和源属性已经“链接上了”
-    state.foo++
-    console.log(stateAsRefs.foo.value) // 2
-
-    stateAsRefs.foo.value++
-    console.log(state.foo) // 3
-
-
-    // 9. 
+    const stateAsRefs = {...toRefs(state)}
+    const proxy = proxyRefs(stateAsRefs)
+    console.log(proxy.foo, proxy.bar); // 1 2
     
+    
+
     
   </script>
 </body>
