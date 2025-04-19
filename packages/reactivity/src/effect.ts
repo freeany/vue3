@@ -9,6 +9,7 @@ function preCleanEffect(effect: ReactiveEffect) {
 // 清除多余的effect
 function postCleanEffect(effect: ReactiveEffect) {
   // [flag, name, aa, bb, cc]
+  //  ｜
   // [flag]
   if(effect.deps.length > effect._depsLength) {
     for(let i = effect._depsLength; i< effect.deps.length;i++) {
@@ -34,11 +35,12 @@ export function effect(fn: any, options?: any) {
 
   _effect.run()
 
+  // 将用户传入的选项覆盖现有的配置，用户可以去决定如何自定义调度， 如{ scheduler: () => {} }
   if(options) {
     Object.assign(_effect, options)
   }
 
-  const runner = _effect.run.bind(_effect)
+  const runner = _effect.run.bind(_effect) // 将源码内部的runner暴露出去。这样可以实现用户自定义runner的aop
   runner._effect = _effect
 
   return runner
