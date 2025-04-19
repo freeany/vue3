@@ -69,18 +69,24 @@
     // }, 2000)
 
     // 4. 自定义effect调度事件
-    const runner = effect(() => {
-      app.innerHTML = data.flag ? data.name : data.age
-    },{
-      scheduler() {
-        console.log('不会重新执行effect, 自己操作更新后的逻辑'); // aop了effect的run方法
-        // runner()
-      }
-    })
+    // const runner = effect(() => {
+    //   app.innerHTML = data.flag ? data.name : data.age
+    // },{
+    //   scheduler() {
+    //     console.log('不会重新执行effect, 自己操作更新后的逻辑'); // aop了effect的run方法
+    //     // runner()
+    //   }
+    // })
 
-    setTimeout(() => {
-      data.flag = false
-    },2000)
+    // setTimeout(() => {
+    //   data.flag = false
+    // },2000)
+
+    // 5.
+    effect(() => {
+     app.innerHTML = data.name 
+     data.name = Math.random()
+    })
 
 
   </script>

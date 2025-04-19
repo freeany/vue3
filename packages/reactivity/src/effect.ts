@@ -48,8 +48,9 @@ export function effect(fn: any, options?: any) {
 
 class ReactiveEffect {
   _trackId = 0; // 用于记录当前effect执行了几次,(防止一个属性在当前effect中多次依赖收集)  只收集一次
-  deps:any = []; // 记录存放了哪些依赖
   _depsLength = 0; // 收集了几个
+  _running = 0; // 是否内部执行
+  deps:any = []; // 记录存放了哪些依赖
 
   active = true
   // fn是用户编写的函数
@@ -72,10 +73,12 @@ class ReactiveEffect {
       
       // 在effect重新执行之前,需要将上一次的依赖情况清空
       preCleanEffect(this)
+      this._running++
       // 重新收集依赖
       return this.fn()
     } finally {
       postCleanEffect(this)
+      this._running--
       activeEffect = lastEffective
     }
   }
@@ -125,8 +128,10 @@ export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: an
 // 将所有的dep进行触发
 export function triggerEffects(dep: any) {
   for(const effect of dep.keys()) {
-    if(effect.scheduler) {
-      effect.scheduler()
+    if(!effect._running) {
+      if(effect.scheduler) {
+        effect.scheduler()
+      }
     }
   }
 }
