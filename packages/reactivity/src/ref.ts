@@ -1,0 +1,51 @@
+import { activeEffect, trackEffect, triggerEffects } from "./effect";
+import { toReactive } from "./reactive";
+import { createDep } from "./reactiveEffect";
+
+
+// ref shallowRef
+export function ref(value) {
+  return createRef(value)
+}
+
+function createRef(value) {
+  return new RefImpl(value)
+}
+
+// 只能通过属性访问器来增加属性的拦截操作
+class RefImpl {
+  private __v_isRef = true; // 增加ref标识
+  private _value; // 保存ref的值
+  public dep; // 用于收集对应的effect
+  constructor(public rawVal) {
+    this._value = toReactive(rawVal)
+  }
+
+  get value() {
+    trackRefValue(this) // 收集到dep里 
+    return this._value
+  }
+  set value(newVal) {
+    if(newVal !== this.rawVal) {
+      this.rawVal = newVal
+      triggerRefValue(this)
+      this._value = toReactive(newVal)
+    }
+  }
+}
+
+
+function trackRefValue(refInstance: InstanceType<typeof RefImpl>) {
+  if(activeEffect) {
+    // 第二个参数没有意义
+    trackEffect(activeEffect, refInstance.dep = createDep(() => (refInstance.dep = undefined), 'undefined'))
+  }
+}
+
+function triggerRefValue(refInstance: InstanceType<typeof RefImpl>) {
+  const dep = refInstance.dep
+  if (dep) {
+    // 将key对应的所有effect执行
+    triggerEffects(dep)
+  }
+}
