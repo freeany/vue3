@@ -49,3 +49,20 @@ function triggerRefValue(refInstance: InstanceType<typeof RefImpl>) {
     triggerEffects(dep)
   }
 }
+
+// toRef, toRefs
+class ObjectRefImpl {
+  private __v_isRef = true; // 增加ref标识
+  constructor(public _obj, public _key) {  }
+
+  get value() {
+    return this._obj[this._key]
+  }
+  set value(val) {
+    this._obj[this._key] = val
+  }
+}
+
+export function toRef(obj, key) {
+  return new ObjectRefImpl(obj, key)
+}
