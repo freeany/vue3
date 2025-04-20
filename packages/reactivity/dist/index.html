@@ -9,7 +9,8 @@
   <div id="app"></div>
 
   <script type="module">
-    import { reactive, effect } from './reactivity.js'
+    import { reactive, ref, toRef, toRefs, proxyRefs } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
+    // import { reactive, effect, ref, toRef, toRefs } from './reactivity.js'
 
     const target = {
       name: 'qqq',
@@ -20,7 +21,7 @@
       }
     }
 
-    const data = reactive(target)
+    // const data = reactive(target)
     // const data1 = reactive(data)
     // console.log(data === data1);
     
@@ -103,6 +104,93 @@
       console.log(data);
     },2000)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+    // 6. ref
+    // const flag = ref(false)
+
+    // const flag1 = {
+    //   _v: false,
+    //   get value() {
+    //     在这里收集依赖
+    //     return this._v 
+    //   },
+    //   set(newVal) {
+    //    在这里触发更新
+    //     this._v = newVal // 
+    //   }
+    // }
+
+
+    // const refData = ref({a: 1})
+
+    // effect(() => {
+    //   app.innerHTML = refData.value.a
+    // })
+
+    // setTimeout(() => {
+    //   refData.value.a = 222
+    // },2000)
+
+
+    // 7. toRef
+    // const state = reactive({
+    //   name: 'jw',
+    //   age: 30
+    // })
+
+    // const name = toRef(state, 'name') // 是基于proxy获取值的，与state中的值会同步
+    // console.log(name);
+    // name.value = 'jl'
+    
+    // console.log(state);
+
+    // 8. toRefs 防止解构的时候丢包
+    // const state = reactive({
+    //   foo: 1,
+    //   bar: 2
+    // })
+
+    // const stateAsRefs = toRefs(state)
+    // // const stateAsRefs = {...toRefs()} // 不会丢失响应式
+
+    // // 这个 ref 和源属性已经“链接上了”
+    // state.foo++
+    // console.log(stateAsRefs.foo.value) // 2
+
+    // stateAsRefs.foo.value++
+    // console.log(state.foo) // 3
+
+
+    // 9. proxyRefs 
+    // 如果是ref则自动.value， 渲染的时候取值就是用这个方法，但是平时开发用不到
+    const state = reactive({
+      foo: 1,
+      bar: 2
+    })
+
+    const stateAsRefs = {...toRefs(state)}
+    const proxy = proxyRefs(stateAsRefs)
+    console.log(proxy.foo, proxy.bar); // 1 2
+    
+    
+
+    
   </script>
 </body>
 </html>

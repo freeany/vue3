@@ -60,3 +60,8 @@ function createReactiveObject(target: any) {
   reactiveMap.set(target, proxy)
   return proxy
 }
+
+
+export function toReactive(val) {
+  return isObject(val) ? reactive(val) : val
+}
