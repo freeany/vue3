@@ -14,7 +14,10 @@
     const target = {
       name: 'qqq',
       age: 30,
-      flag: 'true'
+      flag: 'true',
+      address: {
+        qq: '900'
+      }
     }
 
     const data = reactive(target)
@@ -82,12 +85,23 @@
     //   data.flag = false
     // },2000)
 
-    // 5.
+    // 5. 防止递归调用effect
+    // effect(() => {
+    //  app.innerHTML = data.name 
+    //  data.name = Math.random()
+    // })
+
+    // 6. 深度代理
     effect(() => {
-     app.innerHTML = data.name 
-     data.name = Math.random()
+      console.log('effect?');
+      
+      app.innerHTML = data.address.qq
     })
 
+    setTimeout(() => {
+      data.address.qq = '8000'
+      console.log(data);
+    },2000)
 
   </script>
 </body>

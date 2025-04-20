@@ -21,6 +21,17 @@ function createReactiveObject(target: any) {
   if(!isObject(target)) {
     return target
   }
+  
+  // 深度代理, 这样也可以
+  // Object.keys(target).forEach(key => {
+  //   const data = target[key]
+    
+  //   if(isObject(data)) {
+  //     const res = reactive(data)
+  //     target[key] = res
+  //     return res
+  //   }
+  // })
 
   // 传进来的对象是否是已经被vue的reactive代理后的对象
   /*
