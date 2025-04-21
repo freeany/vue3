@@ -1,6 +1,9 @@
 // packages/shared/src/index.ts
 function isObject(val) {
-  return typeof val === "object" ? val : null;
+  return typeof val === "object" ? true : null;
+}
+function isFunction(val) {
+  return typeof val === "function" ? true : false;
 }
 
 // packages/reactivity/src/effect.ts
@@ -46,13 +49,23 @@ var ReactiveEffect = class {
     this._depsLength = 0;
     // 收集了几个
     this._running = 0;
-    // 是否内部执行
+    // 是否正在执行
     this.deps = [];
     // 记录存放了哪些依赖
+    this._dirtyLevel = 4 /* Dirty */;
+    // 是否是脏的，只供computed使用
     this.active = true;
+    this._dirty = true;
+  }
+  get dirty() {
+    return this._dirtyLevel === 4 /* Dirty */;
+  }
+  set dirty(v) {
+    this._dirtyLevel = v ? 4 /* Dirty */ : 0 /* NoDirty */;
   }
   // 执行effect传入的函数
   run() {
+    this._dirtyLevel = 0 /* NoDirty */;
     if (!this.active) {
       return this.fn();
     }
@@ -85,6 +98,9 @@ function trackEffect(effect2, dep) {
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
+    if (effect2._dirtyLevel < 4 /* Dirty */) {
+      effect2._dirtyLevel = 4 /* Dirty */;
+    }
     if (!effect2._running) {
       if (effect2.scheduler) {
         effect2.scheduler();
@@ -127,12 +143,17 @@ function trigger(target, key, newValue, oldValue) {
 
 // packages/reactivity/src/baseHandler.ts
 var mutableHandlers = {
+  // 需要进行依赖收集
   get(target, key, receiver) {
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
     track(target, key);
-    return Reflect.get(target, key, receiver);
+    let res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
   },
   set(target, key, newValue, receiver) {
     const oldValue = target[key];
@@ -164,11 +185,122 @@ function createReactiveObject(target) {
   reactiveMap.set(target, proxy);
   return proxy;
 }
+function toReactive(val) {
+  return isObject(val) ? reactive(val) : val;
+}
+
+// packages/reactivity/src/ref.ts
+function ref(value) {
+  return createRef(value);
+}
+function createRef(value) {
+  return new RefImpl(value);
+}
+var RefImpl = class {
+  // 用于收集对应的effect
+  constructor(rawVal) {
+    this.rawVal = rawVal;
+    this.__v_isRef = true;
+    this._value = toReactive(rawVal);
+  }
+  get value() {
+    trackRefValue(this);
+    return this._value;
+  }
+  set value(newVal) {
+    if (newVal !== this.rawVal) {
+      this.rawVal = newVal;
+      triggerRefValue(this);
+      this._value = toReactive(newVal);
+    }
+  }
+};
+function trackRefValue(refInstance) {
+  if (activeEffect) {
+    trackEffect(activeEffect, refInstance.dep = createDep(() => refInstance.dep = void 0, "undefined"));
+  }
+}
+function triggerRefValue(refInstance) {
+  const dep = refInstance.dep;
+  if (dep) {
+    triggerEffects(dep);
+  }
+}
+var ObjectRefImpl = class {
+  // 增加ref标识
+  constructor(_obj, _key) {
+    this._obj = _obj;
+    this._key = _key;
+    this.__v_isRef = true;
+  }
+  get value() {
+    return this._obj[this._key];
+  }
+  set value(val) {
+    this._obj[this._key] = val;
+  }
+};
+function toRef(obj, key) {
+  return new ObjectRefImpl(obj, key);
+}
+function toRefs(obj) {
+  let res = {};
+  Object.keys(obj).forEach((key) => {
+    res[key] = toRef(obj, key);
+  });
+  return res;
+}
+
+// packages/reactivity/src/computed.ts
+var ComputedRefImpl = class {
+  // 这个存放dep
+  constructor(getter, setter) {
+    this.getter = getter;
+    this.setter = setter;
+    this.effect = new ReactiveEffect(
+      () => getter(this._value),
+      () => {
+        triggerRefValue(this);
+      }
+    );
+  }
+  get value() {
+    if (this.effect.dirty) {
+      this._value = this.effect.run();
+      trackRefValue(this);
+    }
+    return this._value;
+  }
+  set value(val) {
+    this.setter(val);
+  }
+};
+function computed(getterOrOptions) {
+  const isOnlyeFunction = isFunction(getterOrOptions);
+  let getter;
+  let setter = () => {
+  };
+  if (isOnlyeFunction) {
+    getter = getterOrOptions;
+  } else {
+    getter = getterOrOptions.get;
+    setter = getterOrOptions.set;
+  }
+  return new ComputedRefImpl(getter, setter);
+}
 export {
+  ReactiveEffect,
   activeEffect,
+  computed,
   effect,
   reactive,
+  ref,
+  toReactive,
+  toRef,
+  toRefs,
   trackEffect,
-  triggerEffects
+  trackRefValue,
+  triggerEffects,
+  triggerRefValue
 };
 //# sourceMappingURL=reactivity.js.map

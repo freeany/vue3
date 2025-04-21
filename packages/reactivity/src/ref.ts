@@ -35,14 +35,14 @@ class RefImpl {
 }
 
 
-function trackRefValue(refInstance: InstanceType<typeof RefImpl>) {
+export function trackRefValue(refInstance) {
   if(activeEffect) {
     // 第二个参数没有意义
     trackEffect(activeEffect, refInstance.dep = createDep(() => (refInstance.dep = undefined), 'undefined'))
   }
 }
 
-function triggerRefValue(refInstance: InstanceType<typeof RefImpl>) {
+export function triggerRefValue(refInstance) {
   const dep = refInstance.dep
   if (dep) {
     // 将key对应的所有effect执行

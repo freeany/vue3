@@ -1,3 +1,5 @@
+import { DirtyLevels } from "./constants";
+
 export let activeEffect: any
 
 // 清空effect
@@ -46,19 +48,31 @@ export function effect(fn: any, options?: any) {
   return runner
 }
 
-class ReactiveEffect {
+export class ReactiveEffect {
   _trackId = 0; // 用于记录当前effect执行了几次,(防止一个属性在当前effect中多次依赖收集)  只收集一次
   _depsLength = 0; // 收集了几个
-  _running = 0; // 是否内部执行
+  _running = 0; // 是否正在执行
   deps:any = []; // 记录存放了哪些依赖
+  _dirtyLevel = DirtyLevels.Dirty; // 是否是脏的，只供computed使用
 
   active = true
+  _dirty = true
   // fn是用户编写的函数
   // 如果fn中依赖的数据发生变化之后，需要重新调用 run方法
   constructor(public fn: any, public scheduler: any) {}
   
+  public get dirty() {
+    return this._dirtyLevel === DirtyLevels.Dirty;
+  }
+
+  public set dirty(v) {
+    this._dirtyLevel = v ? DirtyLevels.Dirty : DirtyLevels.NoDirty;
+  }
+
   // 执行effect传入的函数
   run() {
+    this._dirtyLevel = DirtyLevels.NoDirty; // 每次运行后effect变为no_dirty
+
     // 如果不是激活响应式的对象，则执行完就完事了，不用进行依赖收集
     if(!this.active) {
       return this.fn()
@@ -128,6 +142,10 @@ export function trackEffect(effect: InstanceType<typeof ReactiveEffect>, dep: an
 // 将所有的dep进行触发
 export function triggerEffects(dep: any) {
   for(const effect of dep.keys()) {
+    // 当前这个值是不脏的，但是触发更新需要将值变为脏值
+    if (effect._dirtyLevel < DirtyLevels.Dirty) {
+      effect._dirtyLevel = DirtyLevels.Dirty;
+    }
     if(!effect._running) {
       if(effect.scheduler) {
         effect.scheduler()
